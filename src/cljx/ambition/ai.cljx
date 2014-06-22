@@ -21,6 +21,7 @@
 
 (defn random-ai []
   {:name "Rando"
+   :ai-type :random
    :play-card (fn [app pid]
      (when-let [plays (model/valid-plays app pid)]
        (rand-nth plays)))})
@@ -52,6 +53,7 @@
 
 (defn biggest-ai []
   {:name "Big Boy"
+   :ai-type :big
    :play-card (fn [app pid]
                 (when-let [plays (model/valid-plays app pid)]
                   (last (sort-by (juxt (partial trick-strength app)
@@ -60,6 +62,7 @@
 
 (defn littlest-ai []
   {:name "Little Boy"
+   :ai-type :little
    :play-card (fn [app pid]
                 (when-let [plays (model/valid-plays app pid)]
                   (first (sort-by (juxt (partial trick-strength app)
@@ -68,9 +71,20 @@
 
 (defn slammer-ai []
   {:name "Slams MacKenzie"
+   :ai-type :slammer
    :play-card (fn [app pid]
                 (when-let [plays (model/valid-plays app pid)]
                   (last (sort-by (juxt (partial trick-strength app)
+                                       (comp - base-value))
+                                 plays))))})
+
+(defn round-loser-ai []
+  (model/log "ASS")
+  {:name "Loser"
+   :ai-type :round-loser
+   :play-card (fn [app pid]
+                (when-let [plays (model/valid-plays app pid)]
+                  (last (sort-by (juxt (comp - (partial trick-strength app))
                                        (comp - base-value))
                                  plays))))})
 

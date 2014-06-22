@@ -17,7 +17,10 @@
           (recur (model/run-one-update app)))))))
 
 (defn summarize-results [results]
-  (let [freqs (frequencies (map :winner results))]
+  (let [freqs (frequencies (map #(:ai-type (nth
+                                            (:players %)
+                                            (:winner %)))
+                                results))]
     (map (fn [[pid wins]] (str pid ": " wins " wins.\n"))
          (sort-by first freqs))))
 
@@ -25,6 +28,7 @@
   (let [ais [(ai/biggest-ai)
              (ai/littlest-ai)
              (ai/slammer-ai)
-             (ai/littlest-ai)]
-        results (repeatedly 1000 (partial run-game ais))]
+             (ai/round-loser-ai)
+             (ai/random-ai)]
+        results (repeatedly 1000 #(run-game (take 4 (shuffle ais))))]
     (println (summarize-results results))))
