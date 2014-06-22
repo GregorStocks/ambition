@@ -1,4 +1,5 @@
 (defproject ambition "0.1.0-SNAPSHOT"
+
   :description "FIXME: write this!"
   :url "http://example.com/FIXME"
 
@@ -11,11 +12,17 @@
 
   :source-paths ["src"]
 
-  :cljsbuild { 
-    :builds [{:id "ambition"
-              :source-paths ["src"]
-              :compiler {
-                :output-to "ambition.js"
+  :cljsbuild
+  {:builds
+   [{:id "ambition"
+     :source-paths ["src"]
+     :compiler {:output-to "ambition.js"
                 :output-dir "out"
                 :optimizations :none
-                :source-map true}}]})
+                :source-map true}}
+    {:id "node"
+     :source-paths ["src"]
+     :compiler {:output-to "node-ambition.js"
+                :output-dir "out-node"
+                :optimizations :advanced
+                :pretty-print true}}]})

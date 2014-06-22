@@ -8,21 +8,15 @@
 
 (def app-state
   (atom
-   {:current-player-index 0
-    :winning-player-index nil
-    :user-player-index 0
-    :past-tricks []
-    :current-trick []
-    :stage :init
-    :ticks-since-update 0
-    :players (cons (merge (ai/littlest-ai)
-                          {:name "You"
-                           :index 0
-                           :cards []
-                           :points 0
-                           :score 0
-                           :strikes 0})
-                   (map #(ai/make-ai-player %) (range 1 4)))}))
+   (model/base-app-state
+    (cons (merge (ai/littlest-ai)
+                 {:name "You"
+                  :index 0
+                  :cards []
+                  :points 0
+                  :score 0
+                  :strikes 0})
+          (map #(ai/make-ai-player %) (range 1 4))))))
 
 (defn card-view [app pid card]
   (dom/div

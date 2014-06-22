@@ -120,14 +120,15 @@
 
 (defn play-card [card app]
   (let [pid (:player card)]
-    (when (some (partial = card)
+    (if (some (partial = card)
                 (valid-plays app pid))
       (let [result
             (-> app
                 (update-in [:players pid :cards] (partial filter #(not= card %)))
                 (update-in [:current-trick] conj card)
                 (update-in [:current-player-index] (partial next-pid app)))]
-        result))))
+        result)
+      app)))
 
 (defn ai-pick-card [app pid]
   (let [ai (:play-card (nth (:players app) pid))]
@@ -183,6 +184,18 @@
                                   (if (seq strikeouts)
                                     (summarize-game app)
                                     (start-new-round app)))
-                 :game-summary (start-new-game app))
+                 :game-summary (start-new-game app)
+                 (do
+                   (log "WTF" (pr-str app))))
         adjusted (assoc result :ticks-since-update 0)]
     adjusted))
+
+(defn base-app-state [players]
+  {:current-player-index 0
+   :winning-player-index nil
+   :user-player-index 0
+   :past-tricks []
+   :current-trick []
+   :stage :init
+   :ticks-since-update 0
+   :players players})
