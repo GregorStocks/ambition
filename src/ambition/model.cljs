@@ -84,11 +84,12 @@
                                                               (max 0 (- points 105)))}
                            :else {:score 0 :strikes 1}))
           updated (-> app
-                     (update-in [:players] (comp
-                                          #(apply vector %)
-                                          (partial map #(merge-with + % (round-result %)))))
-                     (assoc :stage :round-summary))]
-      (assoc updated :results (map round-result (:players updated))))))
+                      (update-in [:players] (comp
+                                             #(apply vector %)
+                                             (partial map #(merge-with + % (round-result %)))))
+                      (assoc :stage :round-summary)
+                      (assoc :round-results (map round-result (:players app))))]
+      updated)))
 
 
 (defn summarize-trick [app]

@@ -10,40 +10,37 @@
 
 (def app-state
   (atom
-   (merge
-    (model/deal-cards
-     {:current-player-index 0
-      :winning-player-index nil
-      :user-player-index 0
-      :past-tricks []
-      :current-trick []
-      :stage :init
-      :ticks-since-update 0
-      :players [{:name "Gregor"
-                 :index 0
-                 :cards []
-                 :points 0
-                 :score 0
-                 :strikes 0}
-                {:name "CPU 1"
-                 :index 1
-                 :cards []
-                 :points 0
-                 :score 0
-                 :strikes 0}
-                {:name "CPU 2"
-                 :index 2
-                 :cards []
-                 :points 0
-                 :score 0
-                 :strikes 0}
-                {:name "CPU 3"
-                 :index 3
-                 :cards []
-                 :points 0
-                 :score 0
-                 :strikes 0}]})
-    {:current-player-index 0})))
+   {:current-player-index 0
+    :winning-player-index nil
+    :user-player-index 0
+    :past-tricks []
+    :current-trick []
+    :stage :init
+    :ticks-since-update 0
+    :players [{:name "Gregor"
+               :index 0
+               :cards []
+               :points 0
+               :score 0
+               :strikes 0}
+              {:name "CPU 1"
+               :index 1
+               :cards []
+               :points 0
+               :score 0
+               :strikes 0}
+              {:name "CPU 2"
+               :index 2
+               :cards []
+               :points 0
+               :score 0
+               :strikes 0}
+              {:name "CPU 3"
+               :index 3
+               :cards []
+               :points 0
+               :score 0
+               :strikes 0}]}))
 
 (defn card-view [app pid card]
   (dom/div
@@ -81,12 +78,12 @@
              (vector (render-cardback (count (:cards player))))))))
 
 (def wait-times {:init 0
-                 :trick 5
-                 :trick-summary 20
-                 :round-summary 30
-                 :game-summary 40})
+                 :trick 1
+                 :trick-summary 5
+                 :round-summary 7
+                 :game-summary 10})
 (defn ticks->ms [ticks]
-  (* ticks 100))
+  (* ticks 500))
 
 (defn run-one-update [app]
   (model/run-one-update app))
@@ -102,8 +99,7 @@
 
 (defn game-content [app]
   (case (:stage app)
-    :init (dom/button #js {:onClick #(tick app)}
-                      "Click to start. this is stupid but do it")
+    :init (dom/div nil)
     :trick (dom/div nil
                     (when (or (:current-player-index app)
                               (seq (:past-tricks app)))
@@ -119,22 +115,28 @@
                                  (:players app)
                                  (:winning-player-index app))]
                      (dom/div nil
-                              (dom/h1 nil "Trick summary:" (:name winner)
-                                      "wins and gets"
+                              (dom/h1 nil "Trick summary: " (:name winner)
+                                      " wins and gets "
                                       (:trick-value app)
-                                      "points. woo")))
+                                      " points. wooooo")))
     :round-summary (dom/div nil
-                            (dom/h1 nil "Round summary:" (pr-str (:round-results app))))
+                            (dom/h1 nil "Round summary: " (pr-str (:round-results app))))
     :game-summary (dom/div nil
-                           (dom/h1 nil "Game summary: winner is" (:name ((:winner app)
+                           (dom/h1 nil "Game summary: winner is " (:name ((:winner app)
                                                                          (:players app)))))))
 
 (om/root
  (fn [app owner]
-   (dom/div nil
-            (game-content app)
-            (apply dom/ul nil
-                   (map-indexed (partial render-player app owner)
-                                ["bottom" "left" "top" "right"]))))
+   (reify
+     om/IWillMount
+     (will-mount [this]
+       (js/setTimeout (partial tick app) (ticks->ms 1)))
+     om/IRender
+     (render [this]
+       (dom/div nil
+                (game-content app)
+                (apply dom/ul nil
+                       (map-indexed (partial render-player app owner)
+                                    ["bottom" "left" "top" "right"]))))))
  app-state
  {:target (. js/document (getElementById "app"))})
