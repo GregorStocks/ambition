@@ -2,7 +2,7 @@
 /*    -webkit-transform: rotate(90deg) translate(-50%, -50%);
     -webkit-transform-origin: 50% 50%;*/
     position: absolute;
-    top: 50%;
+    top: 30%;
     left: 0px;
   }
 
@@ -11,7 +11,7 @@
     -webkit-transform-origin: 0% 0%;*/
     position: absolute;
     right: 10px;
-    top: 50%;
+    top: 30%;
 }
 
 .player.top {
