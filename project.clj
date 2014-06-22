@@ -22,7 +22,7 @@
                    :output-path "target/test-classes"
                    :rules :clj}
                   {:source-paths ["test/cljx"]
-                   :output-path "target/test-classes"
+                   :output-path "target/classes"
                    :rules :cljs}]}
   :profiles {:dev {:plugins [[lein-cljsbuild "1.0.2"]
                              [org.clojure/clojurescript "0.0-2173"]
@@ -31,7 +31,7 @@
   :cljsbuild {:builds
               [{:id "ambition"
                 :source-paths ["target/classes"]
-                :compiler {:output-to "ambition.js"
-                           :output-dir "out"
+                :compiler {:output-to "public/gen/ambition.js"
+                           :output-dir "public/gen"
                            :optimizations :none
                            :source-map true}}]})

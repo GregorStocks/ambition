@@ -10,3 +10,4 @@ pom.xml
 ambition.js
 .DS_Store
 .[#]*
+/public/gen
