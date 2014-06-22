@@ -130,8 +130,8 @@
         result))))
 
 (defn ai-pick-card [app pid]
-  (when-let [plays (valid-plays app pid)]
-    (rand-nth plays)))
+  (let [ai (:play-card (nth (:players app) pid))]
+    (ai app pid)))
 
 (defn summarize-game [app]
   (let [winner (last (sort-by #(- (:score %)

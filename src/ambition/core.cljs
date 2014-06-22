@@ -1,7 +1,8 @@
 (ns ambition.core
   (:require [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
-            [ambition.model :as model]))
+            [ambition.model :as model]
+            [ambition.ai :as ai]))
 
 (enable-console-print!)
 
@@ -14,30 +15,14 @@
     :current-trick []
     :stage :init
     :ticks-since-update 0
-    :players [{:name "Gregor"
-               :index 0
-               :cards []
-               :points 0
-               :score 0
-               :strikes 0}
-              {:name "CPU 1"
-               :index 1
-               :cards []
-               :points 0
-               :score 0
-               :strikes 0}
-              {:name "CPU 2"
-               :index 2
-               :cards []
-               :points 0
-               :score 0
-               :strikes 0}
-              {:name "CPU 3"
-               :index 3
-               :cards []
-               :points 0
-               :score 0
-               :strikes 0}]}))
+    :players (cons (merge (ai/littlest-ai)
+                          {:name "You"
+                           :index 0
+                           :cards []
+                           :points 0
+                           :score 0
+                           :strikes 0})
+                   (map #(ai/make-ai-player %) (range 1 4)))}))
 
 (defn card-view [app pid card]
   (dom/div
