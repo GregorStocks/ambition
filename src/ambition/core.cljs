@@ -5,9 +5,6 @@
 
 (enable-console-print!)
 
-(defn ticks [t]
-  (* t 100))
-
 (def app-state
   (atom
    {:current-player-index 0
@@ -80,10 +77,10 @@
 (def wait-times {:init 0
                  :trick 1
                  :trick-summary 5
-                 :round-summary 7
-                 :game-summary 5000})
+                 :round-summary 20
+                 :game-summary 50})
 (defn ticks->ms [ticks]
-  (* ticks 5))
+  (* ticks 100))
 
 (defn tick [app]
   (let [stage (:stage @app)
