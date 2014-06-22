@@ -102,16 +102,17 @@
                            (some is-honor? cards-on-suit)) 20
                       :else rank))
         winner-pid (:player (last (sort-by value cards-on-suit)))
-        point-value (trick-value app)]
-    (->
-     app
-     (update-in [:past-tricks] conj trick)
-     (dissoc :current-trick)
-     (dissoc :current-player-index)
-     (assoc :winning-player-index winner-pid)
-     (assoc :trick-value point-value)
-     (update-in [:players winner-pid :points] + point-value)
-     (assoc :stage :trick-summary))))
+        point-value (trick-value app)
+        result (->
+                app
+                (update-in [:past-tricks] conj trick)
+                (dissoc :current-trick)
+                (dissoc :current-player-index)
+                (assoc :winning-player-index winner-pid)
+                (assoc :trick-value point-value)
+                (update-in [:players winner-pid :points] + point-value)
+                (assoc :stage :trick-summary))]
+    result))
 
 (defn next-pid [app pid]
   (mod (inc pid)
@@ -144,10 +145,13 @@
 (defn start-new-trick [app]
   (assoc app
     :stage :trick
+    :current-trick []
     :current-player-index (:winning-player-index app)))
 
 (defn start-new-round [app]
   (assoc (deal-cards app)
+    :past-tricks []
+    :current-trick []
     :stage :trick))
 
 (defn start-new-game [app]
@@ -179,5 +183,6 @@
                                   (if (seq strikeouts)
                                     (summarize-game app)
                                     (start-new-round app)))
-                 :game-summary (start-new-game app))]
-    (assoc result :ticks-since-update 0)))
+                 :game-summary (start-new-game app))
+        adjusted (assoc result :ticks-since-update 0)]
+    adjusted))

@@ -81,12 +81,9 @@
                  :trick 1
                  :trick-summary 5
                  :round-summary 7
-                 :game-summary 10})
+                 :game-summary 5000})
 (defn ticks->ms [ticks]
-  (* ticks 500))
-
-(defn run-one-update [app]
-  (model/run-one-update app))
+  (* ticks 5))
 
 (defn tick [app]
   (let [stage (:stage @app)
@@ -121,9 +118,9 @@
                                       " points. wooooo")))
     :round-summary (dom/div nil
                             (dom/h1 nil "Round summary: " (pr-str (:round-results app))))
-    :game-summary (dom/div nil
-                           (dom/h1 nil "Game summary: winner is " (:name ((:winner app)
-                                                                         (:players app)))))))
+    :game-summary (let [winner (nth (:players app) (:winner app))]
+                    (dom/div nil
+                             (dom/h1 nil "Game summary: winner is " (:name winner))))))
 
 (om/root
  (fn [app owner]
