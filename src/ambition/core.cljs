@@ -5,9 +5,6 @@
 
 (enable-console-print!)
 
-(defn log [arg]
-  (.log js/console arg))
-
 (defn ticks [t]
   (* t 100))
 
@@ -20,6 +17,8 @@
       :user-player-index 0
       :past-tricks []
       :current-trick []
+      :stage :init
+      :ticks-since-update 0
       :players [{:name "Gregor"
                  :index 0
                  :cards []
@@ -46,56 +45,11 @@
                  :strikes 0}]})
     {:current-player-index 0})))
 
-
-(defn end-trick! [app]
-  (let [trick (:current-trick @app)
-        valid-suit (:suit (first trick))
-        cards-on-suit (filter #(= (:suit %) valid-suit) trick)
-        value (fn [{:keys [rank suit]}]
-                (cond (= rank 1) 15
-                      (and (= rank 2)
-                           (some model/is-honor? cards-on-suit)) 20
-                      :else rank))
-        winner-pid (:player (last (sort-by value cards-on-suit)))
-        point-value (model/trick-value @app)]
-    (om/transact! app [:past-tricks] #(conj % trick))
-    (om/transact! app [:current-trick] (constantly []))
-    (om/transact! app :current-player-index (constantly nil)) ;; nobody move!
-    (om/transact! app :winning-player-index (constantly winner-pid))
-    (js/setTimeout
-     (fn []
-       (om/transact! app [:players winner-pid :points] (partial + point-value))
-       (om/transact! app :winning-player-index (constantly nil))
-       (if (= 13 (count (:past-tricks @app)))
-         (do
-           (om/transact! app model/end-round)
-           (when-not (= :game-over (:stage @app))
-             (js/setTimeout #(do
-                               (om/transact! app model/deal-cards)
-                               (js/setTimeout (partial tick app)
-                                              (ticks 5)))
-                            (ticks 10))))
-         (do
-           (when-not (and (= winner-pid (:user-player-index @app)) model/dont-play-for-user)
-             (js/setTimeout (partial tick app) (ticks 2)))
-           (om/transact! app :current-player-index (constantly winner-pid)))))
-     (ticks 3))))
-
-(defn play-card [app pid card]
-  (when (and (= (:current-player-index @app) pid)
-             (some (partial = card) (model/valid-plays @app pid)))
-    (om/transact! app [:players pid :cards] (partial filter #(not= card %)))
-    (om/transact! app [:current-trick] #(conj % card))
-    (om/transact! app :current-player-index #(mod (inc %)
-                                                  (count (:players @app))))
-    (if (= 4 (count (:current-trick @app)))
-      (end-trick! app)
-      (when-not (and (= (:current-player-index @app) (:user-player-index @app)) model/dont-play-for-user)
-        (js/setTimeout (partial tick app) (ticks 0.5))))))
-
 (defn card-view [app pid card]
-  (dom/div #js {:className "card"}
-   (dom/img #js {:onClick #(when pid (play-card app pid card))
+  (dom/div
+   #js {:className "card"}
+   (dom/img #js {:onClick #(when (= (:current-player-index @app) pid)
+                             (om/transact! app (partial model/play-card card)))
                  :src (str "card-images/"
                            (+ (* 4 (mod (- 14 (:rank card)) 13))
                               (case (:suit card)
@@ -114,11 +68,10 @@
   (let [player (-> app :players (get pid))]
     (apply dom/li
            #js {:className (str classname " player")}
-           (dom/h1 #js {:className
-                        (str "playerName"
-                             (cond
-                              (= pid (:current-player-index app))  " activePlayer"
-                              (= pid (:winning-player-index app))  " winningPlayer"))}
+           (dom/h1 #js {:className (str "playerName"
+                                        (if (:current-player-index app)
+                                          (when (= pid (:current-player-index app))  " activePlayer")
+                                          (when (= pid (:winning-player-index app))  " winningPlayer")))}
                    (:name player) ": "
                    (:points player) " Points")
            (dom/h3 nil "Score: " (:score player))
@@ -127,31 +80,67 @@
              (map (partial card-view app pid) (:cards player))
              (vector (render-cardback (count (:cards player))))))))
 
+(def wait-times {:init 0
+                 :trick 5
+                 :trick-summary 5
+                 :round-summary 5
+                 :game-summary 5})
+(defn ticks->ms [ticks]
+  (* ticks 1000))
+
+(defn run-one-update [app]
+  (model/log "GOD DAMMIT")
+  (model/run-one-update app))
+
 (defn tick [app]
-  (if-let [pid (:current-player-index @app)]
-    (when-not (and (= (:user-player-index @app) pid)
-                   model/dont-play-for-user)
-      (if-let [card (rand-nth (model/valid-plays @app pid))]
-        (play-card app pid card)
-        (log "FUCKING WHAT")))
-    (log "FUUUUUUUUUCKING CALLED TICK WRONG TIME")))
+  (model/log "FUCK MAN")
+  (let [stage (:stage @app)
+        ticks-since-update (:ticks-since-update @app)
+        should-tick? (>= ticks-since-update (wait-times stage))]
+    (model/log "ASS FUCK" should-tick? ticks-since-update stage)
+    (if should-tick?
+      (do
+        (model/log "About to transract" (pr-str @app))
+        (om/transact! app run-one-update))
+      (do
+        (model/log "INCIN")
+        (om/transact! app :ticks-since-update inc)
+        (model/log "INCED"))))
+  (js/setTimeout (partial tick app) (ticks->ms 1)))
+
+(defn game-content [app]
+  (case (:stage app)
+    :init (dom/button #js {:onClick #(tick app)}
+                      "Click to start. this is stupid but do it")
+    :trick (dom/div nil
+                    (when (or (:current-player-index app)
+                              (seq (:past-tricks app)))
+                      (apply dom/ul #js {:className "trick"}
+                             (dom/li nil
+                                     "Remaining points: " (reduce + (mapcat #(map model/point-value (:cards %)) (:players app) )))
+                             (when (empty? (:past-tricks app))
+                               (dom/li nil "First trick: 10 points"))
+                             (let [value (model/trick-value app)]
+                               (dom/li nil "Current trick: " value " points"))
+                             (map (partial card-view app 0) (:current-trick app)))))
+    :trick-summary (dom/div nil
+                            (dom/h1 nil "Trick summary:" (:name ((:winning-player-index app)
+                                                         (:players app)))
+                                "wins and gets"
+                                (:trick-value app)
+                                "points. woo"))
+    :round-summary (dom/div nil
+                            (dom/h1 nil "Round summary:" (pr-str (:round-results app))))
+    :game-summary (dom/div nil
+                           (dom/h1 nil "Game summary: winner is" (:name ((:winner app)
+                                                                 (:players app)))))))
 
 (om/root
  (fn [app owner]
-   (let [points (mapcat #(map model/point-value (:cards %)) (:players app) )]
-     (dom/div nil
-              (when (or (:current-player-index app)
-                        (seq (:past-tricks app)))
-                (apply dom/ul #js {:className "trick"}
-                       (dom/li nil
-                               "Remaining points: " (reduce + points))
-                       (when (empty? (:past-tricks app))
-                         (dom/li nil "First trick: 10 points"))
-                       (let [value (model/trick-value app)]
-                         (dom/li nil "Current trick: " value " points"))
-                       (map (partial card-view app 0) (:current-trick app))))
-              (apply dom/ul nil
-                     (map-indexed (partial render-player app owner)
-                                  ["bottom" "left" "top" "right"])))))
+   (dom/div nil
+            (game-content app)
+            (apply dom/ul nil
+                   (map-indexed (partial render-player app owner)
+                                ["bottom" "left" "top" "right"]))))
  app-state
  {:target (. js/document (getElementById "app"))})

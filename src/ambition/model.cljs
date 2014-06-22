@@ -1,5 +1,8 @@
 (ns ambition.model)
 
+(defn log [& args]
+  (.log js/console (apply str args)))
+
 (def suits [:hearts :diamonds :spades :clubs])
 (def ranks [1 2 3 4 5 6 7 8 9 10 11 12 13])
 (def dont-play-for-user false)
@@ -63,7 +66,7 @@
     point-value))
 
 (def slam-cutoff 75)
-(defn end-round [app]
+(defn summarize-round [app]
   (when-not (empty? (:past-tricks app))
     (let [players (:players app)
           max-points (apply max (map :points players))
@@ -84,13 +87,99 @@
                      (update-in [:players] (comp
                                           #(apply vector %)
                                           (partial map #(merge-with + % (round-result %)))))
-                     (update-in [:past-tricks] (constantly [])))
-          strikeouts (filter #(>= (:strikes %) 4) (:players updated))]
-      (if (seq strikeouts)
-        (let [winner (last (sort-by #(- (:score %)
-                                        (if (>= (:strikes %) 4) 10000 0))
-                                    (:players updated)))]
-          (assoc updated
-            :stage :game-over
-            :winner (:index winner)))
-        (assoc updated :stage :round-over)))))
+                     (assoc :stage :round-summary))]
+      (assoc updated :results (map round-result (:players updated))))))
+
+
+(defn summarize-trick [app]
+  (let [trick (:current-trick app)
+        valid-suit (:suit (first trick))
+        cards-on-suit (filter #(= (:suit %) valid-suit) trick)
+        value (fn [{:keys [rank suit]}]
+                (cond (= rank 1) 15
+                      (and (= rank 2)
+                           (some is-honor? cards-on-suit)) 20
+                      :else rank))
+        winner-pid (:player (last (sort-by value cards-on-suit)))
+        point-value (trick-value app)]
+    (->
+     app
+     (update-in [:past-tricks] conj trick)
+     (dissoc :current-trick)
+     (dissoc :current-player-index)
+     (assoc :winning-player-index winner-pid)
+     (assoc :trick-value point-value)
+     (update-in [:players winner-pid :points] + point-value)
+     (assoc :stage :trick-summary))))
+
+(defn next-pid [app pid]
+  (mod (inc pid)
+       (count (:players app))))
+
+(defn play-card [card app]
+  (let [pid (:player card)]
+    (when (some (partial = card)
+                (valid-plays app pid))
+      (let [result
+            (-> app
+                (update-in [:players pid :cards] (partial filter #(not= card %)))
+                (update-in [:current-trick] conj card)
+                (update-in [:current-player-index] (partial next-pid app)))]
+        (if (= 4 (count (:current-trick result)))
+          (assoc result :stage :trick-summary)
+          result)))))
+
+(defn ai-pick-card [app pid]
+  (when-let [plays (valid-plays app pid)]
+    (rand-nth plays)))
+
+(defn summarize-game [app]
+  (let [winner (last (sort-by #(- (:score %)
+                                  (if (>= (:strikes %) 4) 10000 0))
+                              (:players app)))]
+    (assoc app
+      :stage :game-summary
+      :past-tricks []
+      :winner (:index winner))))
+
+(defn start-new-trick [app]
+  (assoc app
+    :stage :trick
+    :current-player-index (:winning-player-index app)))
+
+(defn start-new-round [app]
+  (assoc (deal-cards app)
+    :stage :trick))
+
+(defn start-new-game [app]
+  (let [reset-points #(merge % {:points 0 :score 0 :strikes 0})
+        result (-> app
+                   (update-in [:players] #(apply vector (map reset-points %)))
+                   start-new-round)]
+    result))
+
+(defn run-one-update [app]
+  (log "MHMMMmmmmmmmmM")
+  (let [result (case (:stage app)
+                 :init (start-new-game app)
+                 :trick (do
+                          (if (= 4 (count (:current-trick app)))
+                            (do
+                              (summarize-trick app))
+                            (do
+                              (let [pid (:current-player-index app)
+                                    card (ai-pick-card app pid)]
+                                (if (or (not card)
+                                        (and (= (:user-player-index app) pid)
+                                             dont-play-for-user))
+                                  app
+                                  (play-card card app))))))
+                 :trick-summary (if (= 13 (count (:past-tricks app)))
+                                  (summarize-round app)
+                                  (start-new-trick app))
+                 :round-summary (let [strikeouts (filter #(>= (:strikes %) 4) (:players app))]
+                                  (if (seq strikeouts)
+                                    (summarize-game app)
+                                    (start-new-round app)))
+                 :game-summary (start-new-game app))]
+    (assoc result :ticks-since-update 0)))
