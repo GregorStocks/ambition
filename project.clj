@@ -1,28 +1,33 @@
 (defproject ambition "0.1.0-SNAPSHOT"
-
-  :description "FIXME: write this!"
-  :url "http://example.com/FIXME"
-
-  :dependencies [[org.clojure/clojure "1.5.1"]
+  :jar-exclusions [#"\.cljx|\.swp|\.swo|\.DS_Store"]
+  :source-paths ["src/cljx"]
+  :test-paths ["target/test-classes"]
+  :dependencies [[org.clojure/clojure "1.6.0"]
                  [org.clojure/clojurescript "0.0-2173"]
                  [org.clojure/core.async "0.1.267.0-0d7780-alpha"]
                  [om "0.5.0"]]
 
-  :plugins [[lein-cljsbuild "1.0.2"]]
 
-  :source-paths ["src"]
+  :cljx {:builds [{:source-paths ["src/cljx"]
+                   :output-path "target/classes"
+                   :rules :clj}
+                  {:source-paths ["src/cljx"]
+                   :output-path "target/classes"
+                   :rules :cljs}
+                  {:source-paths ["test/cljx"]
+                   :output-path "target/test-classes"
+                   :rules :clj}
+                  {:source-paths ["test/cljx"]
+                   :output-path "target/test-classes"
+                   :rules :cljs}]}
+  :profiles {:dev {:plugins [[lein-cljsbuild "1.0.2"]
+                             [org.clojure/clojurescript "0.0-2173"]
+                             [com.keminglabs/cljx "0.4.0"]]}}
 
-  :cljsbuild
-  {:builds
-   [{:id "ambition"
-     :source-paths ["src"]
-     :compiler {:output-to "ambition.js"
-                :output-dir "out"
-                :optimizations :none
-                :source-map true}}
-    {:id "node"
-     :source-paths ["src"]
-     :compiler {:output-to "node-ambition.js"
-                :output-dir "out-node"
-                :optimizations :advanced
-                :pretty-print true}}]})
+  :cljsbuild {:builds
+              [{:id "ambition"
+                :source-paths ["target/classes"]
+                :compiler {:output-to "ambition.js"
+                           :output-dir "out"
+                           :optimizations :none
+                           :source-map true}}]})
