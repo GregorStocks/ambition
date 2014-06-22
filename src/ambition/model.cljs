@@ -125,9 +125,7 @@
                 (update-in [:players pid :cards] (partial filter #(not= card %)))
                 (update-in [:current-trick] conj card)
                 (update-in [:current-player-index] (partial next-pid app)))]
-        (if (= 4 (count (:current-trick result)))
-          (assoc result :stage :trick-summary)
-          result)))))
+        result))))
 
 (defn ai-pick-card [app pid]
   (when-let [plays (valid-plays app pid)]
@@ -159,7 +157,6 @@
     result))
 
 (defn run-one-update [app]
-  (log "MHMMMmmmmmmmmM")
   (let [result (case (:stage app)
                  :init (start-new-game app)
                  :trick (do

@@ -82,30 +82,22 @@
 
 (def wait-times {:init 0
                  :trick 5
-                 :trick-summary 5
-                 :round-summary 5
-                 :game-summary 5})
+                 :trick-summary 20
+                 :round-summary 30
+                 :game-summary 40})
 (defn ticks->ms [ticks]
-  (* ticks 1000))
+  (* ticks 100))
 
 (defn run-one-update [app]
-  (model/log "GOD DAMMIT")
   (model/run-one-update app))
 
 (defn tick [app]
-  (model/log "FUCK MAN")
   (let [stage (:stage @app)
         ticks-since-update (:ticks-since-update @app)
         should-tick? (>= ticks-since-update (wait-times stage))]
-    (model/log "ASS FUCK" should-tick? ticks-since-update stage)
     (if should-tick?
-      (do
-        (model/log "About to transract" (pr-str @app))
-        (om/transact! app run-one-update))
-      (do
-        (model/log "INCIN")
-        (om/transact! app :ticks-since-update inc)
-        (model/log "INCED"))))
+      (om/transact! app model/run-one-update)
+      (om/transact! app :ticks-since-update inc)))
   (js/setTimeout (partial tick app) (ticks->ms 1)))
 
 (defn game-content [app]
@@ -123,17 +115,19 @@
                              (let [value (model/trick-value app)]
                                (dom/li nil "Current trick: " value " points"))
                              (map (partial card-view app 0) (:current-trick app)))))
-    :trick-summary (dom/div nil
-                            (dom/h1 nil "Trick summary:" (:name ((:winning-player-index app)
-                                                         (:players app)))
-                                "wins and gets"
-                                (:trick-value app)
-                                "points. woo"))
+    :trick-summary (let [winner (nth
+                                 (:players app)
+                                 (:winning-player-index app))]
+                     (dom/div nil
+                              (dom/h1 nil "Trick summary:" (:name winner)
+                                      "wins and gets"
+                                      (:trick-value app)
+                                      "points. woo")))
     :round-summary (dom/div nil
                             (dom/h1 nil "Round summary:" (pr-str (:round-results app))))
     :game-summary (dom/div nil
                            (dom/h1 nil "Game summary: winner is" (:name ((:winner app)
-                                                                 (:players app)))))))
+                                                                         (:players app)))))))
 
 (om/root
  (fn [app owner]
