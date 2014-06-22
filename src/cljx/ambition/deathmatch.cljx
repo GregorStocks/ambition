@@ -1,7 +1,6 @@
 (ns ambition.deathmatch
   (:require [ambition.model :as model]
-            [ambition.ai :as ai]
-            [clojure.tools.logging :as log]))
+            [ambition.ai :as ai]))
 
 (defn run-game [ais]
   (let [players (map-indexed (fn [pid ai] (merge ai {:index pid
@@ -17,18 +16,25 @@
           (recur (model/run-one-update app)))))))
 
 (defn summarize-results [results]
-  (let [freqs (frequencies (map #(:ai-type (nth
+  (let [win-freqs (frequencies (map #(:ai-type (nth
                                             (:players %)
                                             (:winner %)))
-                                results))]
-    (map (fn [[pid wins]] (str pid ": " wins " wins.\n"))
-         (sort-by first freqs))))
+                                    results))
+        participate-freqs (frequencies (mapcat #(map :ai-type (:players %)) results))]
+    (map (fn [[pid wins]] (str pid ": " wins " wins ("
+                              (long (* 100 (/ wins (participate-freqs pid))))
+                              "%)\n"))
+         (sort-by first win-freqs))))
+
+(defn infinite-seq [elems]
+  (concat elems (lazy-seq (infinite-seq elems))))
 
 (defn -main [& args]
   (let [ais [(ai/biggest-ai)
              (ai/littlest-ai)
-             (ai/slammer-ai)
-             (ai/round-loser-ai)
+             (ai/trick-winner-ai)
+             (ai/trick-loser-ai)
+             (ai/second-place-ai)
              (ai/random-ai)]
-        results (repeatedly 1000 #(run-game (take 4 (shuffle ais))))]
+        results (map run-game (partition 4 (take 4000 (infinite-seq ais))))]
     (println (summarize-results results))))

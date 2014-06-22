@@ -69,7 +69,7 @@
                                        base-value)
                                  plays))))})
 
-(defn slammer-ai []
+(defn trick-winner-ai []
   {:name "Slams MacKenzie"
    :ai-type :slammer
    :play-card (fn [app pid]
@@ -78,17 +78,30 @@
                                        (comp - base-value))
                                  plays))))})
 
-(defn round-loser-ai []
-  (model/log "ASS")
-  {:name "Loser"
+(defn trick-loser-ai []
+  {:name "Nil Boy"
    :ai-type :round-loser
    :play-card (fn [app pid]
                 (when-let [plays (model/valid-plays app pid)]
                   (last (sort-by (juxt (comp - (partial trick-strength app))
-                                       (comp - base-value))
+                                       (comp + base-value))
                                  plays))))})
 
-(def ai-choices [slammer-ai littlest-ai littlest-ai])
+(defn second-place-ai []
+  {:name "Mr Second Place"
+   :ai-type :second-place
+   :play-card (fn [app pid]
+                (when-let [plays (model/valid-plays app pid)]
+                  (let [leader (last (sort-by :points (:players app)))
+                        leader-points (:points leader)
+                        my-points (:points (nth (:players app) pid))
+                        trick-points (model/trick-value app)
+                        ai (if (< (+ trick-points my-points) leader-points)
+                             (trick-winner-ai)
+                             (trick-loser-ai))]
+                    ((:play-card ai) app pid))))})
+
+(def ai-choices [trick-winner-ai littlest-ai littlest-ai])
 (defn make-ai-player [index]
   (merge
    {:cards []

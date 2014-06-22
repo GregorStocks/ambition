@@ -10,8 +10,7 @@
                  [org.clojure/clojure-contrib "1.2.0"]
                  [clj-time "0.6.0"]]
 
-  :main ambition.deathmatch
-
+  :main ambition.core
 
   :cljx {:builds [{:source-paths ["src/cljx"]
                    :output-path "target/classes"
