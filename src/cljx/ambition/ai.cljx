@@ -56,8 +56,7 @@
                 (when-let [plays (model/valid-plays app pid)]
                   (last (sort-by (juxt (partial trick-strength app)
                                        base-value)
-                                 plays))
-                  (last (sort-by (partial base-value app) plays))))})
+                                 plays))))})
 
 (defn littlest-ai []
   {:name "Little Boy"
@@ -72,7 +71,7 @@
    :play-card (fn [app pid]
                 (when-let [plays (model/valid-plays app pid)]
                   (last (sort-by (juxt (partial trick-strength app)
-                                       (comp base-value -))
+                                       (comp - base-value))
                                  plays))))})
 
 (def ai-choices [slammer-ai littlest-ai littlest-ai])

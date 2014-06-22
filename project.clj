@@ -5,7 +5,12 @@
   :dependencies [[org.clojure/clojure "1.6.0"]
                  [org.clojure/clojurescript "0.0-2173"]
                  [org.clojure/core.async "0.1.267.0-0d7780-alpha"]
-                 [om "0.5.0"]]
+                 [om "0.5.0"]
+                 [org.clojure/tools.logging "0.2.3"]
+                 [org.clojure/clojure-contrib "1.2.0"]
+                 [clj-time "0.6.0"]]
+
+  :main ambition.deathmatch
 
 
   :cljx {:builds [{:source-paths ["src/cljx"]
