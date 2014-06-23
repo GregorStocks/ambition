@@ -8,7 +8,9 @@
 
 (def suits [:hearts :diamonds :spades :clubs])
 (def ranks [1 2 3 4 5 6 7 8 9 10 11 12 13])
-(def dont-play-for-user false)
+(def dont-play-for-user
+  #+clj false
+  #+cljs true)
 (defn deal-cards [app]
   (let [cards (shuffle (mapcat (fn [rank] (map (fn [suit] {:rank rank :suit suit})
                                               suits))

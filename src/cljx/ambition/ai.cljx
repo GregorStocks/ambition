@@ -42,12 +42,16 @@
   (let [cards (:current-trick app)
         trick-suit (:suit (first cards))
         cards-in-suit (filter #(= (:suit %) trick-suit) cards)
-        honor-played? (some model/is-honor? cards-in-suit)
+        honor-played? (some model/is-honor?
+                            (concat
+                             (when (= trick-suit suit) [candidate-card]) ;; there WILL be
+                             cards-in-suit))
         ts (partial raw-trick-strength trick-suit honor-played?)
         winning-card (last (sort-by ts cards-in-suit))]
     (cond
-     (not= suit trick-suit) 0
-     (> (ts candidate-card) (ts winning-card)) (ts candidate-card)
+     (and trick-suit (not= suit trick-suit)) 0
+     (or (not winning-card)
+         (> (ts candidate-card) (ts winning-card))) (ts candidate-card)
      (and (= 2 rank) (not= 3 (count cards))) 1 ;; later player could still play an honor
      :else 0)))
 
@@ -69,23 +73,29 @@
                                        base-value)
                                  plays))))})
 
+(defn slamminess [app {:keys [suit rank] :as card}]
+  [(trick-strength app card) ;; slammier to play something that wins the trick
+   (- (base-value card)) ;; slammier to play the weakest card possible if we can't win the trick
+   (case suit ;; tiebreaker when trying to decide what to throw away
+     :spades 0 ;; slammier to hold spades than most other cards
+     :hearts 1
+     :diamonds (if (= rank 2) -5 2) ;; very slammy to hold the 2 of diamonds
+     :clubs (if (= rank 13) -10 3) ;; excruciatingly slammy to hold the king of clubs
+     )])
+
+(defn plays-by-slamminess [app pid]
+  (sort-by (partial slamminess app)
+           (model/valid-plays app pid)))
+
 (defn trick-winner-ai []
   {:name "Slams MacKenzie"
    :ai-type :slammer
-   :play-card (fn [app pid]
-                (when-let [plays (model/valid-plays app pid)]
-                  (last (sort-by (juxt (partial trick-strength app)
-                                       (comp - base-value))
-                                 plays))))})
+   :play-card (fn [app pid] (last (plays-by-slamminess app pid)))})
 
 (defn trick-loser-ai []
   {:name "Nil Boy"
    :ai-type :round-loser
-   :play-card (fn [app pid]
-                (when-let [plays (model/valid-plays app pid)]
-                  (last (sort-by (juxt (comp - (partial trick-strength app))
-                                       base-value)
-                                 plays))))})
+   :play-card (fn [app pid] (first (plays-by-slamminess app pid)))})
 
 (defn second-place-ai []
   {:name "Mr Second Place"
