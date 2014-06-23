@@ -111,6 +111,11 @@
        (render [this]
          (dom/div nil
                   (game-content app)
+                  (dom/p #js {:className "footer"}
+                         (dom/a #js {:href "https://github.com/GregorStocks/ambition"}
+                                "https://github.com/GregorStocks/ambition")
+                         (dom/a #js {:href "http://ambition.techcrunks.com"}
+                                "http://ambition.techcrunks.com"))
                   (apply dom/ul nil
                          (map-indexed (partial render-player app owner)
                                       ["bottom" "left" "top" "right"]))))))

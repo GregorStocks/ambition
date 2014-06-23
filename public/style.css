@@ -61,3 +61,8 @@ div.card p {
     top: 40%;
     left: 30%;
 }
+
+.footer {
+    position: absolute;
+    bottom: 0;
+}
