@@ -58,11 +58,38 @@ div.card p {
 
 .trick {
     position: absolute;
-    top: 40%;
+    top: 20%;
     left: 30%;
 }
 
 .footer {
     position: absolute;
     bottom: 0;
+}
+
+.played-cards td {
+    width: 40px;
+    height: 96px;
+    margin: 0;
+    padding: 0;
+}
+
+.player1card img {
+   -webkit-transform: rotate(90deg);
+    -webkit-transform-origin: 50% 50%;
+ }
+
+.player2card img {
+    -webkit-transform: rotate(180deg);
+    -webkit-transform-origin: 50% 50%;
+}
+
+.player3card img {
+    -webkit-transform: rotate(270deg);
+    -webkit-transform-origin: 50% 50%;
+}
+
+h1,h2,h3,h4,h5,p {
+    padding: 0;
+    margin: 0;
 }

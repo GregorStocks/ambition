@@ -21,7 +21,7 @@
                     :strikes 0})
             (map #(ai/make-ai-player %) (range 1 4))))))
 
-  (defn card-view [app pid card]
+  (defn card-view [app pid points? card]
     (dom/div
      #js {:className "card"}
      (dom/img #js {:onClick #(when (= (:current-player-index @app) pid)
@@ -34,7 +34,8 @@
                                   :hearts 3
                                   :diamonds 4))
                              ".png")})
-     (dom/p nil (str (model/point-value card)))))
+     (when points?
+       (dom/p nil (str (model/point-value card))))))
 
   (defn render-cardback [card-count]
     (dom/div #js {:className "cardback"}
@@ -44,16 +45,16 @@
     (let [player (-> app :players (get pid))]
       (apply dom/li
              #js {:className (str classname " player")}
-             (dom/h1 #js {:className (str "playerName"
+             (dom/h3 #js {:className (str "playerName"
                                           (if (:current-player-index app)
                                             (when (= pid (:current-player-index app))  " activePlayer")
                                             (when (= pid (:winning-player-index app))  " winningPlayer")))}
                      (:name player) ": "
                      (:points player) " Points")
-             (dom/h3 nil "Score: " (:score player))
-             (dom/h3 nil "Strikes: " (:strikes player))
+             (dom/h4 nil "Score: " (:score player))
+             (dom/h4 nil "Strikes: " (:strikes player))
              (if (= pid (:user-player-index app))
-               (map (partial card-view app pid) (:cards player))
+               (map (partial card-view app pid true) (:cards player))
                (vector (render-cardback (count (:cards player))))))))
 
   (def wait-times {:init 0
@@ -73,20 +74,40 @@
         (om/transact! app :ticks-since-update inc)))
     (js/setTimeout (partial tick app) (ticks->ms 1)))
 
+  (defn cell-for-player-card [app pid]
+    (model/log "Hmm" (:current-trick app) pid)
+    (let [result     (if-let [card (first (filter #(= (:player %) pid)
+                                                  (:current-trick app)))]
+                       (dom/td #js {:className (str "player" pid "card")}
+                               (card-view app pid false card))
+                       (dom/td #js {:className (str "player" pid "card")}))]
+      (model/log result)
+      result))
+
   (defn game-content [app]
     (case (:stage app)
       :init (dom/div nil)
       :trick (dom/div nil
                       (when (or (:current-player-index app)
                                 (seq (:past-tricks app)))
-                        (apply dom/ul #js {:className "trick"}
-                               (dom/li nil
-                                       "Remaining points: " (reduce + (mapcat #(map model/point-value (:cards %)) (:players app) )))
-                               (when (empty? (:past-tricks app))
-                                 (dom/li nil "First trick: 10 points"))
-                               (let [value (model/trick-value app)]
-                                 (dom/li nil "Current trick: " value " points"))
-                               (map (partial card-view app 0) (:current-trick app)))))
+                        (dom/ul #js {:className "trick"}
+                                (dom/table #js {:className "played-cards"}
+                                           (dom/tr nil
+                                                   (dom/td nil " ")
+                                                   (cell-for-player-card app 2))
+                                           (dom/tr nil
+                                                   (cell-for-player-card app 1)
+                                                   (dom/td nil " ")
+                                                   (cell-for-player-card app 3))
+                                           (dom/tr nil
+                                                   (dom/td nil " ")
+                                                   (cell-for-player-card app 0)))
+                                (dom/li nil
+                                        "Remaining points: " (reduce + (mapcat #(map model/point-value (:cards %)) (:players app) )))
+                                (when (empty? (:past-tricks app))
+                                  (dom/li nil "First trick: 10 points"))
+                                (let [value (model/trick-value app)]
+                                  (dom/li nil "Current trick: " value " points")))))
       :trick-summary (let [winner (nth
                                    (:players app)
                                    (:winning-player-index app))]

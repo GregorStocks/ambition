@@ -3,8 +3,18 @@
    #+clj [clojure.tools.logging :as log]))
 
 (defn log [& args]
-  #+cljs (.log js/console (apply str args))
+  #+cljs (.log js/console (apply pr-str args))
   #+clj (log/info args))
+
+(defn base-app-state [players]
+  {:current-player-index 0
+   :winning-player-index nil
+   :user-player-index 0
+   :past-tricks []
+   :current-trick []
+   :stage :init
+   :ticks-since-update 0
+   :players players})
 
 (def suits [:hearts :diamonds :spades :clubs])
 (def ranks [1 2 3 4 5 6 7 8 9 10 11 12 13])
@@ -194,13 +204,3 @@
                    (log "WTF" (pr-str app))))
         adjusted (assoc result :ticks-since-update 0)]
     adjusted))
-
-(defn base-app-state [players]
-  {:current-player-index 0
-   :winning-player-index nil
-   :user-player-index 0
-   :past-tricks []
-   :current-trick []
-   :stage :init
-   :ticks-since-update 0
-   :players players})
