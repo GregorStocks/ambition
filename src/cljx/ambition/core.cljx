@@ -62,7 +62,7 @@
                    :round-summary 20
                    :game-summary 50})
   (defn ticks->ms [ticks]
-    (* ticks 100))
+    (* ticks 300))
 
   (defn tick [app]
     (let [stage (:stage @app)
@@ -114,6 +114,7 @@
                   (dom/p #js {:className "footer"}
                          (dom/a #js {:href "https://github.com/GregorStocks/ambition"}
                                 "https://github.com/GregorStocks/ambition")
+                         " "
                          (dom/a #js {:href "http://ambition.techcrunks.com"}
                                 "http://ambition.techcrunks.com"))
                   (apply dom/ul nil
