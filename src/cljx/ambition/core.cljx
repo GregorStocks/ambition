@@ -109,16 +109,25 @@
       :trick-summary (let [winner (nth
                                    (:players app)
                                    (:winning-player-index app))]
-                       (dom/div nil
-                                (dom/h1 nil "Trick summary: " (:name winner)
-                                        " wins and gets "
-                                        (:trick-value app)
-                                        " points. wooooo")))
-      :round-summary (dom/div nil
-                              (dom/h1 nil "Round summary: " (pr-str (:round-results app))))
+                       (dom/div #js {:className "trick-summary summary"}
+                                (dom/h2 nil (str
+                                             (:name winner)
+                                             " won the trick and got "
+                                             (:trick-value app)
+                                             " points."))))
+      :round-summary (dom/div #js {:className "round-summary summary"}
+                              (apply dom/h2 nil
+                                     (map-indexed
+                                      #(let [result (nth (:round-results app)
+                                                         %1)]
+                                         (dom/h3 nil
+                                                 (str (:name %2) " got a score of "
+                                                      (or (:score result) 0) " and "
+                                                      (or (:strikes result) 0) " strikes.")))
+                                      (:players app))))
       :game-summary (let [winner (nth (:players app) (:winner app))]
-                      (dom/div nil
-                               (dom/h1 nil "Game summary: winner is " (:name winner))))))
+                      (dom/div #js {:className "game-summary summary"}
+                               (dom/h1 nil "Game summary: winner is " (:name winner) ". GOODBYE")))))
 
   (om/root
    (fn [app owner]

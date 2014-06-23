@@ -59,7 +59,7 @@ div.card p {
 .trick {
     position: absolute;
     top: 20%;
-    left: 40%;
+    left: 30%;
 }
 
 .footer {
@@ -96,4 +96,10 @@ h1,h2,h3,h4,h5,p {
 
 body {
     background-color: #9a7;
+}
+
+.summary {
+    position: absolute;
+    top: 20%;
+    left: 30%;
 }
