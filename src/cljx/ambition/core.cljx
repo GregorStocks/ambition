@@ -62,7 +62,7 @@
                    :round-summary 20
                    :game-summary 50})
   (defn ticks->ms [ticks]
-    (* ticks 700))
+    (* ticks 500))
 
   (defn tick [app]
     (let [stage (:stage @app)

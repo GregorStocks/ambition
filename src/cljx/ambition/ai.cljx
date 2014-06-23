@@ -34,7 +34,7 @@
 
 (defn raw-trick-strength [trick-suit honor-played? {:keys [rank suit] :as card}]
   (cond
-   (not= suit trick-suit) 0
+   (and trick-suit (not= suit trick-suit)) 0
    (and (not honor-played?) (= rank 2)) 1
    :else (base-value card)))
 
