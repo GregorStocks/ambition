@@ -91,6 +91,12 @@
                       (when (or (:current-player-index app)
                                 (seq (:past-tricks app)))
                         (dom/ul #js {:className "trick"}
+                                (dom/li nil
+                                        "Remaining points: " (reduce + (mapcat #(map model/point-value (:cards %)) (:players app) )))
+                                (when (empty? (:past-tricks app))
+                                  (dom/li nil "First trick: 10 points"))
+                                (let [value (model/trick-value app)]
+                                  (dom/li nil "Current trick: " value " points"))
                                 (dom/table #js {:className "played-cards"}
                                            (dom/tr nil
                                                    (dom/td nil " ")
@@ -101,13 +107,7 @@
                                                    (cell-for-player-card app 3))
                                            (dom/tr nil
                                                    (dom/td nil " ")
-                                                   (cell-for-player-card app 0)))
-                                (dom/li nil
-                                        "Remaining points: " (reduce + (mapcat #(map model/point-value (:cards %)) (:players app) )))
-                                (when (empty? (:past-tricks app))
-                                  (dom/li nil "First trick: 10 points"))
-                                (let [value (model/trick-value app)]
-                                  (dom/li nil "Current trick: " value " points")))))
+                                                   (cell-for-player-card app 0))))))
       :trick-summary (let [winner (nth
                                    (:players app)
                                    (:winning-player-index app))]
