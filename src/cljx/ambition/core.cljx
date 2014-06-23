@@ -75,13 +75,11 @@
     (js/setTimeout (partial tick app) (ticks->ms 1)))
 
   (defn cell-for-player-card [app pid]
-    (model/log "Hmm" (:current-trick app) pid)
     (let [result     (if-let [card (first (filter #(= (:player %) pid)
                                                   (:current-trick app)))]
                        (dom/td #js {:className (str "player" pid "card")}
                                (card-view app pid false card))
                        (dom/td #js {:className (str "player" pid "card")}))]
-      (model/log result)
       result))
 
   (defn game-content [app]
