@@ -84,7 +84,7 @@
    :play-card (fn [app pid]
                 (when-let [plays (model/valid-plays app pid)]
                   (last (sort-by (juxt (comp - (partial trick-strength app))
-                                       (comp + base-value))
+                                       base-value)
                                  plays))))})
 
 (defn second-place-ai []
@@ -101,7 +101,7 @@
                              (trick-loser-ai))]
                     ((:play-card ai) app pid))))})
 
-(def ai-choices [trick-winner-ai littlest-ai littlest-ai])
+(def ai-choices [trick-winner-ai second-place-ai trick-loser-ai])
 (defn make-ai-player [index]
   (merge
    {:cards []
