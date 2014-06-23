@@ -43,19 +43,20 @@
 
   (defn render-player [app owner pid classname]
     (let [player (-> app :players (get pid))]
-      (apply dom/li
-             #js {:className (str classname " player")}
-             (dom/h3 #js {:className (str "playerName"
-                                          (if (:current-player-index app)
-                                            (when (= pid (:current-player-index app))  " activePlayer")
-                                            (when (= pid (:winning-player-index app))  " winningPlayer")))}
-                     (:name player) ": "
-                     (:points player) " Points")
-             (dom/h4 nil "Score: " (:score player))
-             (dom/h4 nil "Strikes: " (:strikes player))
-             (if (= pid (:user-player-index app))
-               (map (partial card-view app pid true) (:cards player))
-               (vector (render-cardback (count (:cards player))))))))
+      (dom/li
+       #js {:className (str classname " player")}
+       (dom/h3 #js {:className (str "playerName"
+                                    (if (:current-player-index app)
+                                      (when (= pid (:current-player-index app))  " activePlayer")
+                                      (when (= pid (:winning-player-index app))  " winningPlayer")))}
+               (:name player) ": "
+               (:points player) " Points")
+       (dom/h4 nil "Score: " (:score player))
+       (dom/h4 nil "Strikes: " (:strikes player))
+       (if (= pid (:user-player-index app))
+         (apply dom/div #js {:className "player-cards"}
+                (map (partial card-view app pid true) (:cards player)))
+         (render-cardback (count (:cards player)))))))
 
   (def wait-times {:init 0
                    :trick 1

@@ -20,13 +20,16 @@
     position: absolute;
     top: 50px;
     left: 50%;
+    text-align: center;
 }
 
 .player.bottom {
     position: absolute;
     bottom: 50px;
-    left: auto;
-    right: auto;
+    margin: 0 auto;
+    left: 0;
+    right: 0;
+    text-align: center;
 }
 
 li {
@@ -102,4 +105,9 @@ body {
     position: absolute;
     top: 20%;
     left: 30%;
+}
+
+div.player-cards {
+    text-align: center;
+    margin: 0 auto;
 }
