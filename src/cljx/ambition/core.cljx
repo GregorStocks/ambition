@@ -60,11 +60,11 @@
 
   (def wait-times {:init 0
                    :trick 1
-                   :trick-summary 5
+                   :trick-summary 3
                    :round-summary 20
                    :game-summary 50})
   (defn ticks->ms [ticks]
-    (* ticks 500))
+    (* ticks 400))
 
   (defn tick [app]
     (let [stage (:stage @app)

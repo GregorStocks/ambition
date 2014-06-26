@@ -86,9 +86,14 @@
     (let [players (:players app)
           max-points (apply max (map :points players))
           num-nils (count (filter #(= (:points %) 0) players))
+          num-understrikes (count (filter #(and (pos? %)
+                                                (< % 15))
+                                          (map :points players)))
           round-result #(let [points (:points %)]
                           (cond
-                           (and (zero? points) (>= max-points slam-cutoff)) {:score 0 :strikes 1}
+                           (and (zero? points)
+                                (>= max-points slam-cutoff)
+                                (or (>= num-nils 3) (<= num-understrikes 0))) {:score 0 :strikes 1}
                            (and (zero? points) (= num-nils 1)) {:score 30}
                            (zero? points) {:score 15}
                            (< points 15) {:score points :strikes 1}
